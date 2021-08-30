@@ -20,7 +20,7 @@ dependencies {
 	implementation 'org.projectlombok:lombok:1.18.18'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.mockito:mockito-inline:3.5.13'
-	implementation 'com.github.jsimone:webapp-runner:8.5.11.3'
+	compileClasspath 'com.heroku:webapp-runner:9.0.31.0'
 }
 
 test {
@@ -34,7 +34,7 @@ war.mustRunAfter clean
 
 task copyToLib(type: Copy) {
 	into "$buildDir/libs"
-	from(configurations.runtimeClasspath) {
+	from(configurations.compileClasspath) {
 		include "webapp-runner*"
 	}
 }
