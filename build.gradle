@@ -21,7 +21,7 @@ dependencies {
 	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.mockito:mockito-inline:3.5.13'
-	compile 'com.github.jsimone:webapp-runner:8.5.11.3'
+	implementation 'com.github.jsimone:webapp-runner:8.5.11.3'
 }
 
 test {
@@ -35,7 +35,7 @@ war.mustRunAfter clean
 
 task copyToLib(type: Copy) {
 	into "$buildDir/libs"
-	from(configurations.compile) {
+	from(configurations.implementation) {
 		include "webapp-runner*"
 	}
 }
