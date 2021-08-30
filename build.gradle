@@ -35,7 +35,7 @@ war.mustRunAfter clean
 
 task copyToLib(type: Copy) {
 	into "$buildDir/libs"
-	from(configurations.implementation) {
+	from(configurations.runtimeClasspath) {
 		include "webapp-runner*"
 	}
 }
