@@ -21,11 +21,11 @@
     - Consultar stats:  
         
         GET  
-        http://URL-LOCAL/api/v1/stats  
+        http://URL-LOCAL:3001/api/v1/stats  
       
     - Validar adn mutante:  
       POST  
-      http://URL-LOCAL/api/v1/mutant  
+      http://URL-LOCAL:3001/api/v1/mutant  
       Content-Type: application/json
       Body:  
         {  
