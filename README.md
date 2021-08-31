@@ -1,2 +1,37 @@
-# mutant
-Mutant dna verification
+# Proyecto que valida adn mutante (mutant)
+## Mutant dna verification
+
+**Requisitos:**
+- JDK 15
+- Gradle wrapper 6.9.1 (Ya viene en carpeta gradle)
+
+1. Descargar repositorio desde:
+   https://github.com/gaborre/mutant.git
+   
+2. Abrir proyecto con IntelliJ IDEA Community Edition Version 2020.3:
+   https://www.jetbrains.com/es-es/idea/download/other.html
+   
+3. Ejecutar desde Run/Debug Configurations, las siguientes tareas:
+    - clean build
+    - bootRun
+    
+4. Endpoints:
+    - Para probar cada endpoint, puede usar **Postman**
+    - El valor de URL-LOCAL debe reemplazarlo por: 127.0.0.1, localhost, u otra ip de su equipo.
+    - Consultar stats:  
+        
+        GET  
+        http://URL-LOCAL/api/v1/stats  
+      
+    - Validar adn mutante:  
+      POST  
+      http://URL-LOCAL/api/v1/mutant  
+      Content-Type: application/json
+      Body:  
+        {  
+            "dna": [ "ATGCGA","CAGTGC","TTATGT","AGAAGG","CCCCTA","TCACTG" ]  
+        }
+5. Para acceder a la base de datos, puede usar Robo3T, ya que la base de datos es MongoDB:  
+    https://robomongo.org/download  
+    Tomar los datos de conexión del archivo **application.properties**
+    
