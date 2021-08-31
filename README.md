@@ -50,7 +50,7 @@
     - Validar adn mutante:  
       POST  
       https://mutants-check.herokuapp.com/api/v1/mutant  
-      Content-Type: application/json
+      Content-Type: application/json  
       Body:  
       {  
       "dna": [ "ATGCGA","CAGTGC","TTATGT","AGAAGG","CCCCTA","TCACTG" ]  
