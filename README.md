@@ -20,15 +20,16 @@
     
 4. Endpoints:
     - Para probar cada endpoint, puede usar **Postman**
-    - El valor de URL-LOCAL debe reemplazarlo por: 127.0.0.1, localhost, u otra ip de su equipo.
+    - El valor de URL-LOCAL debe reemplazarlo por: 127.0.0.1, localhost, u otra ip de su equipo
+    - El puerto por default que levanta el tomcat embebido es el 8080.
     - Consultar stats:  
       
         GET  
-        http://URL-LOCAL:3001/api/v1/stats  
+        http://URL-LOCAL:8080/api/v1/stats  
       
     - Validar adn mutante:  
       POST  
-      http://URL-LOCAL:3001/api/v1/mutant  
+      http://URL-LOCAL:8080/api/v1/mutant  
       Content-Type: application/json
       Body:  
         {  
