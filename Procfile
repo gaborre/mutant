@@ -1,1 +1,1 @@
-web: java -jar build/libs/mutant-0.0.1.jar --port 3001
+web: java -Dserver.port=3001 -jar build/libs/mutant-0.0.1.jar
