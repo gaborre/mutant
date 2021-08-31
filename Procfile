@@ -1,1 +1,1 @@
-web: java -jar build/libs/webapp-runner-*.jar -p 8080 build/libs/*.war
+web: java -Dserver.port=8080 -jar build/libs/webapp-runner-*.jar --port 8080 build/libs/*.war
