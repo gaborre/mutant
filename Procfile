@@ -1,1 +1,1 @@
-web: java -Dserver.port=8080 -jar build/libs/mutant-0.0.1.jar --port 8080
+web: java -jar build/libs/mutant-0.0.1.jar --port 8080
