@@ -2,10 +2,11 @@ package com.gabn.mutant.util;
 
 import com.gabn.mutant.model.Mutant;
 import com.gabn.mutant.model.Stats;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class MutantUtil {
 
@@ -111,59 +112,88 @@ public class MutantUtil {
             }
             dDNA.add(sequence.toString());
         }
-        rows = 3;
-        cols = 0;
 
-        if (!isMutant) {
-            for (k = 0; k < r; k++) {
-                sequence.setLength(0);
+        return isMutant;
+    }
 
-                if (rows == (dnaLength - 1)) {
-                    for (j = cols; j < dnaLength; j++) {
-                        sequence.append(dna[rows].substring(j, j+1));
-                        rows = rows - 1;
-                    }
-                    rows = dnaLength - 1;
+    public static boolean arrangeSecundaryDiagonalSequence(String[] dna) {
+        boolean isMutant = false;
+        List<String> dDNA = new ArrayList<>();
+        int i = 0;
+        int j = 0;
+        int k = 0;
+        int dnaLength = dna.length;
+        int rows = 3;
+        int cols = 0;
+        int r = (2 * dnaLength) - 1 - Constants.UNAVAILABLE_SEQUENCE_COUNT;
+        StringBuilder sequence = new StringBuilder();
+
+        for (k = 0; k < r; k++) {
+            sequence.setLength(0);
+
+            if (rows == (dnaLength - 1)) {
+                for (j = cols; j < dnaLength; j++) {
+                    sequence.append(dna[rows].substring(j, j+1));
+                    rows = rows - 1;
+                }
+                rows = dnaLength - 1;
+                cols = cols + 1;
+            } else {
+                for (i = rows; i >= 0; i--) {
+                    sequence.append(dna[i].substring(cols, cols+1));
                     cols = cols + 1;
-                } else {
-                    for (i = rows; i >= 0; i--) {
-                        sequence.append(dna[i].substring(cols, cols+1));
-                        cols = cols + 1;
-                    }
-                    rows = rows + 1;
-                    cols = 0;
                 }
-                if (validateDNA(sequence.toString())) {
-                    isMutant = true;
-                    break;
-                }
-                dDNA.add(sequence.toString());
+                rows = rows + 1;
+                cols = 0;
             }
+            if (validateDNA(sequence.toString())) {
+                isMutant = true;
+                break;
+            }
+            dDNA.add(sequence.toString());
         }
 
         return isMutant;
     }
 
-    public static Stats getStats(List<Mutant> allMutants) {
-        Stats stats = new Stats();
-        if (allMutants.isEmpty()) {
-            stats.setCountMutantDNA(0);
-            stats.setCountHumanDNA(0);
-            stats.setRatio(0);
-        } else {
-            List<Mutant> mutants = allMutants.stream().filter(mutant -> mutant.isMutant()).collect(Collectors.toList());
-            List<Mutant> humans = allMutants.stream().filter(mutant -> !mutant.isMutant()).collect(Collectors.toList());
-            int mutantCount = mutants.size();
-            int humanCount = humans.size();
-            stats.setCountMutantDNA(mutantCount);
-            stats.setCountHumanDNA(humanCount);
-            stats.setRatio(0);
-            if (humans.size() > 0) {
-                float result = mutantCount / humanCount;
-                float ratio = (float) (Math.round(result * 100.0) / 100.0);
-                stats.setRatio(ratio);
+    public static Mono<Stats> getStats(Flux<Mutant> allMutantsFlux) {
+        Stats statsObj = new Stats();
+
+        Mono<Stats> stats = allMutantsFlux
+        .collectList()
+        .flatMap(allMutant -> {
+            Mono<Stats> stats2;
+            if (allMutant.isEmpty()) {
+                statsObj.setCountMutantDNA(0);
+                statsObj.setCountHumanDNA(0);
+                statsObj.setRatio(0);
+                stats2 = Mono.just(statsObj);
+            } else {
+                stats2 = allMutantsFlux
+                .filter(Mutant::isMutant)
+                .collectList()
+                .flatMap(mutants -> {
+                    return allMutantsFlux
+                        .filter(mutant -> !mutant.isMutant())
+                        .collectList()
+                        .flatMap(humans -> {
+                            int mutantCount = mutants.size();
+                            int humanCount = humans.size();
+                            statsObj.setCountMutantDNA(mutantCount);
+                            statsObj.setCountHumanDNA(humanCount);
+                            statsObj.setRatio(0.0F);
+                            if (humanCount > 0) {
+                                float result = mutantCount / humanCount;
+                                float ratio = (float) (Math.round(result * 100.0) / 100.0);
+                                statsObj.setRatio(ratio);
+                            }
+
+                            return Mono.just(statsObj);
+                        });
+                });
             }
-        }
+            return stats2;
+        });
 
         return stats;
     }

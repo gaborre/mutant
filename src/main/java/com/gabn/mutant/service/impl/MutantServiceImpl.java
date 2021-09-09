@@ -6,8 +6,8 @@ import com.gabn.mutant.service.MutantService;
 import com.gabn.mutant.model.Stats;
 import com.gabn.mutant.util.MutantUtil;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Service
 public class MutantServiceImpl implements MutantService {
@@ -30,6 +30,9 @@ public class MutantServiceImpl implements MutantService {
                 isMutant = MutantUtil.arrangeVerticalSequence(dna);
                 if (!isMutant) {
                     isMutant = MutantUtil.arrangeDiagonalSequence(dna);
+                    if (!isMutant) {
+                        isMutant = MutantUtil.arrangeSecundaryDiagonalSequence(dna);
+                    }
                 }
             }
             try {
@@ -42,12 +45,12 @@ public class MutantServiceImpl implements MutantService {
         return isMutant;
     }
 
-    public Mutant saveMutantRecord(String[] dna, boolean isMutant) {
-        return mutantRepository.save(new Mutant(dna, isMutant));
+    public Mono<Mutant> saveMutantRecord(String[] dna, boolean isMutant) {
+        return (Mono<Mutant>) mutantRepository.save(new Mutant(dna, isMutant)).subscribe();
     }
 
-    public Stats getStats() {
-        List<Mutant> allMutants = mutantRepository.findAll();
+    public Mono<Stats> getStats() {
+        Flux<Mutant> allMutants = mutantRepository.findAll();
 
         return MutantUtil.getStats(allMutants);
     }
