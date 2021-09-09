@@ -1,51 +1,46 @@
 package com.gabn.mutant.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gabn.mutant.model.DNA;
+import com.gabn.mutant.model.Mutant;
 import com.gabn.mutant.model.Stats;
 import com.gabn.mutant.repository.MutantRepository;
 import com.gabn.mutant.service.MutantService;
+import com.gabn.mutant.util.Constants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.json.JacksonTester;
-import org.springframework.http.HttpStatus;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.web.reactive.server.WebTestClient;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
-@AutoConfigureMockMvc
+@RunWith(SpringRunner.class)
+@WebFluxTest
 class MutantControllerTest {
-    private MockMvc mvc;
+    @Autowired
+    private WebTestClient webTestClient;
     @Mock
     private MutantService mutantService;
-    @InjectMocks
-    private MutantController mutantController;
-    @Mock
+    @MockBean
     private MutantRepository mutantRepository;
     private JacksonTester<DNA> mutantDNA;
-    private JacksonTester<Stats> statsTester;
     private DNA mutantDnaRequest200;
     private DNA mutantDnaRequest403;
     private Stats statsResponse;
+    private Mono<Stats> monoStats;
+    private Flux<Mutant> allMutants;
 
     @BeforeEach
     void setUp() {
-        JacksonTester.initFields(this, new ObjectMapper());
-        mutantController = new MutantController(mutantRepository);
-        mvc = MockMvcBuilders.standaloneSetup(mutantService, mutantController).build();
         mutantDnaRequest200 = new DNA();
         mutantDnaRequest403 = new DNA();
         String[] dna200 = {"ATGCGA","CAGTGC","TTATGT","AGAAGG","CCCCTA","TCACTG"};
@@ -56,6 +51,11 @@ class MutantControllerTest {
         statsResponse.setCountMutantDNA(4);
         statsResponse.setCountHumanDNA(10);
         statsResponse.setRatio(0.4F);
+        monoStats = Mono.just(statsResponse);
+
+        Mutant mutant1 = new Mutant(dna200, true);
+        Mutant mutant2 = new Mutant(dna403, false);
+        allMutants = Flux.just(mutant1, mutant2);
     }
 
     @Test
@@ -63,32 +63,36 @@ class MutantControllerTest {
 
         when(mutantService.validateDNA(any())).thenReturn(true);
 
-        mvc.perform(post("/mutant")
+        webTestClient.post().uri("/mutant")
                 .contentType(MediaType.APPLICATION_JSON)
-        .content(mutantDNA.write(mutantDnaRequest200).getJson()))
-                .andExpect(status().isOk());
+                .accept(MediaType.APPLICATION_JSON)
+                .body(Mono.just(mutantDnaRequest200), DNA.class)
+                .exchange()
+                .expectStatus().isOk();
     }
 
     @Test
     void validate_dna_403_forbidden() throws Exception {
-
         when(mutantService.validateDNA(any())).thenReturn(false);
 
-        mvc.perform(post("/mutant")
+        webTestClient.post().uri(Constants.MUTANT_URI)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(mutantDNA.write(mutantDnaRequest403).getJson()))
-                .andExpect(status().is4xxClientError());
+                .accept(MediaType.APPLICATION_JSON)
+                .body(Mono.just(mutantDnaRequest403), DNA.class)
+                .exchange()
+                .expectStatus().isForbidden();
     }
 
     @Test
     void get_stats_ok() throws Exception {
 
-        when(mutantService.getStats()).thenReturn(statsResponse);
+        when(mutantService.getStats()).thenReturn(monoStats);
+        when(mutantRepository.findAll()).thenReturn(allMutants);
 
-        MockHttpServletResponse response = mvc.perform(get("/stats")
-                .accept(MediaType.APPLICATION_JSON))
-                .andReturn()
-                .getResponse();
-        assertEquals(response.getStatus(), HttpStatus.OK.value());
+        webTestClient.get().uri(Constants.STATS_URI)
+
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus().isOk();
     }
 }
